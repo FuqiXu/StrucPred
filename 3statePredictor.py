@@ -151,17 +151,25 @@ def data_svm(data):
 ### Test file parser（3 line fasta format) ###
 # store each sequence infomation in a dataframe, and keep them in a list
 def test_fasta(filename,windowsize):
+    # storeing original format of sequences.
+    testSeq = []
+    for i in range(len(rawtoframe("data/test1.txt").seq)):
+        testSeqSingle=''.join(rawtoframe("data/test1.txt").seq[i])
+        testSeq.append(testSeqSingle) 
+    
+    # dealing with test protein 
     testBinary = binary_rawdata(filename)
     testWind = data_window(windowsize,testBinary)
     testData = []
     for i in range(len(testWind)):
         seqData = testWind.iloc[i]
         testData.append(seqData)
-    return testData
+        
+    return testSeq,testData
 
 
 ### Save prediction result ###
-def sav_pred(prediction,testdata,testfilename):
+def sav_pred(prediction,testdata,testSeq,testfilename):
     # Create a prediction result folder a .dat file"
     filepath = os.path.join('prediction', 'pred.dat')
     if not os.path.exists('prediction'):
@@ -186,8 +194,8 @@ def sav_pred(prediction,testdata,testfilename):
     for m in range(len(testdata)):
         f.write(testdata[m].seqID)
         f.write("\n")
-        #f.write(testdata[m].seq)
-        #f.write("\n")
+        f.write(testSeq[m])
+        f.write("\n")
         f.write(preds[m])
         f.write("\n")
     f.close()
@@ -273,7 +281,8 @@ if __name__ == "__main__":
     scores['test_recall_macro']
     
     print("Preparing test data...")
-    testData = test_fasta("data/test1.txt",3)
+    
+    testSeq,testData = test_fasta("data/test1.txt",3)
     
     print("Predicting...")
     preds = []
@@ -282,7 +291,7 @@ if __name__ == "__main__":
         preds.append(pred)
     
     print("Saving prediction...")
-    predResult = sav_pred(preds,testData,'test1')
+    predResult = sav_pred(preds,testData,testSeq,'test1')
         
     print("Done!")
 
