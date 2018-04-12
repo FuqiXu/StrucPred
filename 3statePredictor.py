@@ -9,9 +9,7 @@ import numpy as np
 import os
 import pandas
 from sklearn.model_selection import cross_validate
-from sklearn.metrics import recall_score
 from sklearn import svm
-
 
 path = os.getcwd()
 
@@ -20,8 +18,6 @@ path = os.getcwd()
 # Read data from 3 line fasta file and store them in a data frame
 def rawtoframe(filename):
     seqID1, seq1, seqTopo1= [], [], []
-    
-    # Read the three line data into three lists
     with open(filename) as f:
         data = f.read().splitlines()
         for i in range(len(data)):
@@ -32,7 +28,6 @@ def rawtoframe(filename):
             if i%3 == 0:
                seqID1.append(data[i])
               
-    # Store all data into a dataframe
     seqData1 = {
             "seqID":seqID1,
             "seq":seq1,
@@ -40,7 +35,7 @@ def rawtoframe(filename):
             }
     seqData = DataFrame(seqData1)
 
-    # Convert every sequence and sequence topology from list to arrays, so that the sequence can be processed residue by residue.
+    # Convert every sequence and sequence topology from list to arrays
     for i in range(len(seqData.seq)):
         a = list(seqData.seq[i])
         seqData.seq[i]=a
@@ -96,10 +91,9 @@ def topo_converter(seqTopo):
 def binary_rawdata(filename):
     data = rawtoframe(filename)
     
-    # Converting residues into numbers
+    # Converting residues from letters into numbers
     seq_converter(data.seq)
     topo_converter(data.seqTopo)
-    
     return data
 
 
@@ -116,11 +110,9 @@ def data_window(windowsize,data):
             data.seq[i].append(seqLast)
             data.seq[i].insert(0,seqFirst)
         
-    # Creating a slide window.The basic element in one window is #windowsize*Amino acids. 
-    # Scanning every protein   
+    # Creating a slide window.The basic element in one window is #windowsize*AA   
     for m in range(len(data)):
         seq_single = []
-        #Scanning every residue
         for p in range(len(data.seqTopo[m])):
             temp = []
             for n in range(windowsize):
@@ -149,15 +141,14 @@ def data_svm(data):
 
 
 ### Test file parser（3 line fasta format) ###
-# store each sequence infomation in a dataframe, and keep them in a list
+# Store each sequence infomation in a dataframe, and keep them in a list
 def test_fasta(filename,windowsize):
-    # storeing original format of sequences.
+    # Storing original format of sequences.
     testSeq = []
     for i in range(len(rawtoframe("data/test1.txt").seq)):
         testSeqSingle=''.join(rawtoframe("data/test1.txt").seq[i])
         testSeq.append(testSeqSingle) 
-    
-    # dealing with test protein 
+     
     testBinary = binary_rawdata(filename)
     testWind = data_window(windowsize,testBinary)
     testData = []
@@ -171,12 +162,12 @@ def test_fasta(filename,windowsize):
 ### Save prediction result ###
 def sav_pred(prediction,testdata,testSeq,testfilename):
     # Create a prediction result folder a .dat file"
-    filepath = os.path.join('prediction', 'pred.dat')
-    if not os.path.exists('prediction'):
-        os.makedirs('prediction')
+    filepath = os.path.join('result', 'pred.dat')
+    if not os.path.exists('result'):
+        os.makedirs('result')
     f = open(filepath, "w")
     
-    # Parse numberic prediction to letters
+    # Change numberic prediction to letters
     predStruc = []
     preds = []
     for i in range(len(prediction)):
@@ -203,34 +194,15 @@ def sav_pred(prediction,testdata,testSeq,testfilename):
 '''
 
 ### svm model ###
-# SVC prediction，using one-versus-one classifier, n_class*(n-1)/2 classifiers are built
-def svmSVC(seq,topo,testSeq):
-    clf = svm.SVC()
-    clf.fit(seq,topo)
 
-    prediction = open('prediction.txt','a')
-    PredTopo = Topo_Converter_Rev(a)
-    prediction.write(PredTopo)
-    prediction.write("\n")
-    prediction.close()
+    clf = svm.SVC()
+    linSVC(trainSeq,trainTopo,testSeq)
+
+
     #scores = cross_val_score(clf, trainSeq, trainTopo, cv=5, verbose=40, n_jobs=-1)
     #print('scores')
-    #print(scores)
-    return clf
-
-#Linear SVC, using “one-versus-rest" classifiers
-def linSVC(trainSeq,trainTopo,testSeq):
-    lin_clf = svm.LinearSVC(C=1.0).fit(trainSeq,trainTopo)
-    prediction = open('prediction.txt','a')
-    PredTopo = Topo_Converter_Rev(lin_clf.predict(testSeq))
-    prediction.write(PredTopo)
-    prediction.write("\n")
-    prediction.close()
-    #scores = cross_val_score(lin_clf, trainSeq, trainTopo, cv=5, verbose=40, n_jobs=-1)
-    #print('scores')
-    #print(scores)
-    return lin_clf
-
+'''
+'''
 #using random forest classifier)
 def randomforest(trainSeq,trainTopo,testseq):
     X, y = make_classification(trainSeq, trainTopo)
@@ -246,17 +218,15 @@ def randomforest(trainSeq,trainTopo,testseq):
     print('scores')
     print(scores)
     return rf_clf    
-
+'''
 
 ### evaluation ###
 ### pssm ###
 ### output formating###
 
-def testseq(windowsize,filename):
-    pass
 ### novel sequence parser ###  
 
-'''
+
 if __name__ == "__main__":
     print("Parsing data...")
     dataBinary = binary_rawdata("data/test2.dat")
@@ -272,16 +242,8 @@ if __name__ == "__main__":
     print("Model building...")
     clf = svm.SVC(kernel='linear', C=1, random_state=0)
     clf.fit(dataSeq,dataStruc)
-      
-    print("Cross validating...")
-    scoring = ['precision_macro', 'recall_macro']
-    scores = cross_validate(clf, dataSeq, dataStruc, scoring=scoring,cv=5, 
-                            return_train_score=False)
-    sorted(scores.keys())
-    scores['test_recall_macro']
     
     print("Preparing test data...")
-    
     testSeq,testData = test_fasta("data/test1.txt",3)
     
     print("Predicting...")
@@ -292,7 +254,19 @@ if __name__ == "__main__":
     
     print("Saving prediction...")
     predResult = sav_pred(preds,testData,testSeq,'test1')
-        
+    
+    print("Cross validating...")
+    scoring = ['precision_macro', 'recall_macro']
+    scores = cross_validate(clf, dataSeq, dataStruc, scoring=scoring,cv=5, 
+                            return_train_score=False)
+    sorted(scores.keys())
+    scores['test_recall_macro']
+
+    DataFrame.from_dict(data=scores, orient='index').to_csv("result/cross_validation_score.csv")
+    #for key, value in sorted(scores.items()):
+     #   score.write(str(key)+'\t'+str(value)+'\n')
+    #score.close()
+  
     print("Done!")
 
    
