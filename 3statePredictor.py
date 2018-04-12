@@ -127,6 +127,20 @@ def data_window(windowsize,data):
         
     return data
 
+# transfering data into a binary array to be used in svm
+def data_svm(data):
+    seq = []
+    struc = []
+    for i in range(len(data)):
+        for j in range(len(data.seq[i])):
+            seq.append(data.seq[i][j])
+        for k in range(len(data.seqTopo[i])):
+            struc.append(data.seqTopo[i][k])
+    dataSVM = DataFrame({
+            'seq':seq,
+            'struc':struc
+                           })
+    return dataSVM
 ### Cross validation ### 
 
 '''
@@ -192,11 +206,12 @@ def testseq(windowsize,filename):
 ### novel sequence parser ###    
 '''
 ### main ###
-data = binary_rawdata("data/test1.txt")
-wind = data_window(5,data)
+dataBinary = binary_rawdata("data/test1.txt")
+dataWind = data_window(5,dataBinary)
+dataSVM = data_svm(dataWind)
+'''
 from sklearn.preprocessing import MultiLabelBinarizer
-for m in range(len(data)):
-    MultiLabelBinarizer().fit_transform(data.seqTopo[m])
+
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import recall_score
 from sklearn import svm
@@ -206,3 +221,4 @@ scores = cross_validate(clf, data.seq, data.seqTopo, scoring=scoring,cv=5,
                         return_train_score=False)
 sorted(scores.keys())
 scores['test_recall_macro']
+'''
