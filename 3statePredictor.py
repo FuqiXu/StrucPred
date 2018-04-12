@@ -12,6 +12,7 @@ from sklearn.model_selection import cross_validate
 from sklearn.metrics import recall_score
 from sklearn import svm
 
+
 path = os.getcwd()
 
 ###### Parsing train dataset######
@@ -131,32 +132,68 @@ def data_window(windowsize,data):
 
 # Transfering data into a binary array to be used in svm
 def data_svm(data):
-    seq = []
-    struc = []
+    sequence = []
+    structure = []
     data.seq = np.array(data.seq)
     data.seqTopo = np.array(data.seqTopo)
     for i in range(len(data)):
         for j in range(len(data.seq[i])):
-            seq.append(data.seq[i][j])
+            sequence.append(data.seq[i][j])
         for k in range(len(data.seqTopo[i])):
-            struc.append(data.seqTopo[i][k])
+            structure.append(data.seqTopo[i][k])
     dataSVM = DataFrame({
-            'seq':seq,
-            'struc':struc
+            'seq':sequence,
+            'seqTopo':structure
                            })
     return dataSVM
 
 
 ### Test file parser（3 line fasta format) ###
+# store each sequence infomation in a dataframe, and keep them in a list
 def test_fasta(filename,windowsize):
     testBinary = binary_rawdata(filename)
     testWind = data_window(windowsize,testBinary)
-    testSVM = data_svm(testWind)
-    testSeq = pandas.Series.tolist(testSVM.seq)
-    testRealStruc = pandas.Series.tolist(testSVM.struc) 
-    return testSeq,testRealStruc
+    testData = []
+    for i in range(len(testWind)):
+        seqData = testWind.iloc[i]
+        testData.append(seqData)
+    return testData
+
+
+### Save prediction result ###
+def sav_pred(prediction,testdata,testfilename):
+    # Create a prediction result folder a .dat file"
+    filepath = os.path.join('prediction', 'pred.dat')
+    if not os.path.exists('prediction'):
+        os.makedirs('prediction')
+    f = open(filepath, "w")
     
+    # Parse numberic prediction to letters
+    predStruc = []
+    preds = []
+    for i in range(len(prediction)):
+        for j in range(len(prediction[i])):
+            if prediction[i][j]==0:
+                predStruc.append ('H')
+            if prediction[i][j]==1:
+                predStruc.append ('E')
+            if prediction[i][j]==2:
+                predStruc.append ('C')
+        pred = str.join("",predStruc)
+        preds.append(pred)
+        
+    # Save prediction result to file
+    for m in range(len(testdata)):
+        f.write(testdata[m].seqID)
+        f.write("\n")
+        #f.write(testdata[m].seq)
+        #f.write("\n")
+        f.write(preds[m])
+        f.write("\n")
+    f.close()
+
 '''
+
 ### svm model ###
 # SVC prediction，using one-versus-one classifier, n_class*(n-1)/2 classifiers are built
 def svmSVC(seq,topo,testSeq):
@@ -208,8 +245,9 @@ def randomforest(trainSeq,trainTopo,testseq):
 ### output formating###
 
 def testseq(windowsize,filename):
-    
-### novel sequence parser ###    
+    pass
+### novel sequence parser ###  
+
 '''
 if __name__ == "__main__":
     print("Parsing data...")
@@ -221,12 +259,12 @@ if __name__ == "__main__":
     print("SVM prediction preparing...")
     dataSVM = data_svm(dataWind)
     dataSeq = pandas.Series.tolist(dataSVM.seq)
-    dataStruc = pandas.Series.tolist(dataSVM.struc)
-        
+    dataStruc = pandas.Series.tolist(dataSVM.seqTopo)
+      
     print("Model building...")
     clf = svm.SVC(kernel='linear', C=1, random_state=0)
     clf.fit(dataSeq,dataStruc)
-        
+      
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
     scores = cross_validate(clf, dataSeq, dataStruc, scoring=scoring,cv=5, 
@@ -235,13 +273,17 @@ if __name__ == "__main__":
     scores['test_recall_macro']
     
     print("Preparing test data...")
-    testSeq,testStruc = test_fasta("data/test1.txt",3)
-
+    testData = test_fasta("data/test1.txt",3)
+    
     print("Predicting...")
-    pred = clf.predict(testSeq)
+    preds = []
+    for i in range(len(testData)):
+        pred = clf.predict(testData[i].seq)
+        preds.append(pred)
     
     print("Saving prediction...")
-    if not os.path.exists('prediction'):
-        os.makedirs('prediction')
+    predResult = sav_pred(preds,testData,'test1')
         
     print("Done!")
+
+   
