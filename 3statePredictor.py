@@ -8,11 +8,13 @@ from pandas.core.frame import DataFrame
 import numpy as np
 import os
 import pandas
+from sklearn.model_selection import cross_validate
+from sklearn.metrics import recall_score
+from sklearn import svm
 
 path = os.getcwd()
 
 ###### Parsing train dataset######
-print("parsing data...")
 
 # Read data from 3 line fasta file and store them in a data frame
 def rawtoframe(filename):
@@ -101,7 +103,6 @@ def binary_rawdata(filename):
 
 
 ########### adding winodws #############
-print("adding window...")
 
 # Add slide window to evaluate the environment's impact on topology
 def data_window(windowsize,data):
@@ -129,7 +130,6 @@ def data_window(windowsize,data):
     return data
 
 # Transfering data into a binary array to be used in svm
-print("svm prediction preparing...")
 def data_svm(data):
     seq = []
     struc = []
@@ -145,15 +145,23 @@ def data_svm(data):
             'struc':struc
                            })
     return dataSVM
-### Cross validation ### 
 
+
+### Test file parser（3 line fasta format) ###
+def test_fasta(filename,windowsize):
+    testBinary = binary_rawdata(filename)
+    testWind = data_window(windowsize,testBinary)
+    testSVM = data_svm(testWind)
+    testSeq = pandas.Series.tolist(testSVM.seq)
+    testRealStruc = pandas.Series.tolist(testSVM.struc)
+    testData = {
+            "seq":testSeq,
+            "seqTopo":testRealStruc
+            }
+   
+    return testData
+    
 '''
-### cross validation ###
-def LooCV(x,y):
-    loo = LeaveOneOut()
-    for train, test in loo.split(x, y):
-        return train, test
-
 ### svm model ###
 # SVC prediction，using one-versus-one classifier, n_class*(n-1)/2 classifiers are built
 def svmSVC(seq,topo,testSeq):
@@ -204,29 +212,37 @@ def randomforest(trainSeq,trainTopo,testseq):
 ### evaluation ###
 ### pssm ###
 ### output formating###
-### Test file parser（3 line fasta format) ###
+
 def testseq(windowsize,filename):
     
 ### novel sequence parser ###    
 '''
 if __name__ == "__main__":
-    dataBinary = binary_rawdata("data/cas2.3line.txt`")
+    print("Parsing data...")
+    dataBinary = binary_rawdata("data/test2.dat")
+    
+    print("Adding window...")
     dataWind = data_window(3,dataBinary)
+    
+    print("SVM prediction preparing...")
     dataSVM = data_svm(dataWind)
     dataSeq = pandas.Series.tolist(dataSVM.seq)
     dataStruc = pandas.Series.tolist(dataSVM.struc)
     
-    print("svm modelling...")
-    #for i in range(len(dataSVM.seq)): 
-        #a = np.concatenate(dataSVM.seq[i]).astype(None)
-    #print(a)
-
-    from sklearn.model_selection import cross_validate
-    from sklearn.metrics import recall_score
-    from sklearn import svm
-    scoring = ['precision_macro', 'recall_macro']
+    print("Preparing test data...")
+    testdata = test_fasta("data/test1.txt",3)
+    
+    
+    print("Model building...")
     clf = svm.SVC(kernel='linear', C=1, random_state=0)
+    clf.fit(dataSeq,dataStruc)
+    
+    print("Cross validating...")
+    scoring = ['precision_macro', 'recall_macro']
     scores = cross_validate(clf, dataSeq, dataStruc, scoring=scoring,cv=5, 
                             return_train_score=False)
     sorted(scores.keys())
     scores['test_recall_macro']
+    
+    
+    print("Done!")
