@@ -153,13 +153,8 @@ def test_fasta(filename,windowsize):
     testWind = data_window(windowsize,testBinary)
     testSVM = data_svm(testWind)
     testSeq = pandas.Series.tolist(testSVM.seq)
-    testRealStruc = pandas.Series.tolist(testSVM.struc)
-    testData = {
-            "seq":testSeq,
-            "seqTopo":testRealStruc
-            }
-   
-    return testData
+    testRealStruc = pandas.Series.tolist(testSVM.struc) 
+    return testSeq,testRealStruc
     
 '''
 ### svm model ###
@@ -167,8 +162,7 @@ def test_fasta(filename,windowsize):
 def svmSVC(seq,topo,testSeq):
     clf = svm.SVC()
     clf.fit(seq,topo)
-	 
-    a = clf.predict(testSeq)
+
     prediction = open('prediction.txt','a')
     PredTopo = Topo_Converter_Rev(a)
     prediction.write(PredTopo)
@@ -228,15 +222,11 @@ if __name__ == "__main__":
     dataSVM = data_svm(dataWind)
     dataSeq = pandas.Series.tolist(dataSVM.seq)
     dataStruc = pandas.Series.tolist(dataSVM.struc)
-    
-    print("Preparing test data...")
-    testdata = test_fasta("data/test1.txt",3)
-    
-    
+        
     print("Model building...")
     clf = svm.SVC(kernel='linear', C=1, random_state=0)
     clf.fit(dataSeq,dataStruc)
-    
+        
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
     scores = cross_validate(clf, dataSeq, dataStruc, scoring=scoring,cv=5, 
@@ -244,5 +234,14 @@ if __name__ == "__main__":
     sorted(scores.keys())
     scores['test_recall_macro']
     
+    print("Preparing test data...")
+    testSeq,testStruc = test_fasta("data/test1.txt",3)
+
+    print("Predicting...")
+    pred = clf.predict(testSeq)
     
+    print("Saving prediction...")
+    if not os.path.exists('prediction'):
+        os.makedirs('prediction')
+        
     print("Done!")
