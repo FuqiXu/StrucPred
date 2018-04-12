@@ -10,14 +10,14 @@ import os
 
 path = os.getcwd()
 
-###### Parsing data######
-print("parsing data")
+###### Parsing train dataset######
+print("parsing data...")
 
-# read data from 3 line fasta file and store them in a data frame
+# Read data from 3 line fasta file and store them in a data frame
 def rawtoframe(filename):
     seqID1, seq1, seqTopo1= [], [], []
     
-    # read the three line data into three lists
+    # Read the three line data into three lists
     with open(filename) as f:
         data = f.read().splitlines()
         for i in range(len(data)):
@@ -46,7 +46,7 @@ def rawtoframe(filename):
         
     return seqData
 
-# vectorising data.
+# Vectorising data.
 def seq_converter(seq):
     aa_dic = {  'A':[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
                 'R':[0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,],
@@ -88,17 +88,121 @@ def topo_converter(seqTopo):
     
     return seqTopo
 
-#read raw data into a dataframe and convert them into vectors.
+# Read raw data into a dataframe and convert them into vectors.
 def binary_rawdata(filename):
     data = rawtoframe(filename)
     
-    # converting residues into numbers
+    # Converting residues into numbers
     seq_converter(data.seq)
     topo_converter(data.seqTopo)
+    
     return data
 
 
-###########adding winodws#############
+########### adding winodws #############
+print("adding window...")
+
+# Add slide window to evaluate the environment's impact on topology
+def data_window(windowsize,data):
+    # Adding head and tails in protein sequence data.
+    for i in range(len(data)):
+        seqFirst=data.seq[i][0]      
+        seqLast=data.seq[i][-1]
+        halfwin = int((windowsize-1)/2)
+        for j in range(halfwin):
+            data.seq[i].append(seqLast)
+            data.seq[i].insert(0,seqFirst)
+        
+    # Creating a slide window.The basic element in one window is #windowsize*Amino acids. 
+    # Scanning every protein   
+    for m in range(len(data)):
+        seq_single = []
+        #Scanning every residue
+        for p in range(len(data.seqTopo[m])):
+            temp = []
+            for n in range(windowsize):
+                temp.append(data.seq[m][p+n])
+            seq_single.append(temp)    
+        data.seq[m]=seq_single
+        
+    return data
+
+### Cross validation ### 
+
+'''
+### cross validation ###
+def LooCV(x,y):
+    loo = LeaveOneOut()
+    for train, test in loo.split(x, y):
+        return train, test
+
+### svm model ###
+# SVC prediction，using one-versus-one classifier, n_class*(n-1)/2 classifiers are built
+def svmSVC(seq,topo,testSeq):
+    clf = svm.SVC()
+    clf.fit(seq,topo)
+	 
+    a = clf.predict(testSeq)
+    prediction = open('prediction.txt','a')
+    PredTopo = Topo_Converter_Rev(a)
+    prediction.write(PredTopo)
+    prediction.write("\n")
+    prediction.close()
+    #scores = cross_val_score(clf, trainSeq, trainTopo, cv=5, verbose=40, n_jobs=-1)
+    #print('scores')
+    #print(scores)
+    return clf
+
+#Linear SVC, using “one-versus-rest" classifiers
+def linSVC(trainSeq,trainTopo,testSeq):
+    lin_clf = svm.LinearSVC(C=1.0).fit(trainSeq,trainTopo)
+    prediction = open('prediction.txt','a')
+    PredTopo = Topo_Converter_Rev(lin_clf.predict(testSeq))
+    prediction.write(PredTopo)
+    prediction.write("\n")
+    prediction.close()
+    #scores = cross_val_score(lin_clf, trainSeq, trainTopo, cv=5, verbose=40, n_jobs=-1)
+    #print('scores')
+    #print(scores)
+    return lin_clf
+
+#using random forest classifier)
+def randomforest(trainSeq,trainTopo,testseq):
+    X, y = make_classification(trainSeq, trainTopo)
+    rf_clf = RandomForestClassifier(max_depth=2, random_state=0)
+    rf_clf.fit(X, y)
+    print("prediction_random Forest:")
+    print(rf_clf.predict(testseq))
+    prediction = open('prediction.txt','a')
+    PredTopo = Topo_Converter_Rev(rf_clf.predict(testseq))
+    prediction.write(PredTopo)
+    prediction.close()
+    scores = cross_val_score(rf_clf, trainSeq, trainTopo, cv=5, verbose=40, n_jobs=-1) 
+    print('scores')
+    print(scores)
+    return rf_clf    
+
+
+### evaluation ###
+### pssm ###
+### output formating###
+### Test file parser（3 line fasta format) ###
+def testseq(windowsize,filename):
     
-###main###
-data = binary_rawdata("data/cas2.3line.txt")
+### novel sequence parser ###    
+'''
+### main ###
+data = binary_rawdata("data/test1.txt")
+wind = data_window(5,data)
+from sklearn.preprocessing import MultiLabelBinarizer
+for m in range(len(data)):
+    MultiLabelBinarizer().fit_transform(data.seqTopo[m])
+from sklearn.model_selection import cross_validate
+from sklearn.metrics import recall_score
+from sklearn import svm
+scoring = ['precision_macro', 'recall_macro']
+clf = svm.SVC(kernel='linear', C=1, random_state=0)
+scores = cross_validate(clf, data.seq, data.seqTopo, scoring=scoring,cv=5, 
+                        return_train_score=False)
+sorted(scores.keys())
+scores['test_recall_macro']
