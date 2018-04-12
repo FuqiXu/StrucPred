@@ -7,6 +7,7 @@ Created on Wed Apr 11 20:32:51 2018
 from pandas.core.frame import DataFrame
 import numpy as np
 import os
+import pandas
 
 path = os.getcwd()
 
@@ -121,16 +122,19 @@ def data_window(windowsize,data):
         for p in range(len(data.seqTopo[m])):
             temp = []
             for n in range(windowsize):
-                temp.append(data.seq[m][p+n])
+                temp.extend(data.seq[m][p+n])
             seq_single.append(temp)    
         data.seq[m]=seq_single
         
     return data
 
-# transfering data into a binary array to be used in svm
+# Transfering data into a binary array to be used in svm
+print("svm prediction preparing...")
 def data_svm(data):
     seq = []
     struc = []
+    data.seq = np.array(data.seq)
+    data.seqTopo = np.array(data.seqTopo)
     for i in range(len(data)):
         for j in range(len(data.seq[i])):
             seq.append(data.seq[i][j])
@@ -205,20 +209,24 @@ def testseq(windowsize,filename):
     
 ### novel sequence parser ###    
 '''
-### main ###
-dataBinary = binary_rawdata("data/test1.txt")
-dataWind = data_window(5,dataBinary)
-dataSVM = data_svm(dataWind)
-'''
-from sklearn.preprocessing import MultiLabelBinarizer
+if __name__ == "__main__":
+    dataBinary = binary_rawdata("data/cas2.3line.txt`")
+    dataWind = data_window(3,dataBinary)
+    dataSVM = data_svm(dataWind)
+    dataSeq = pandas.Series.tolist(dataSVM.seq)
+    dataStruc = pandas.Series.tolist(dataSVM.struc)
+    
+    print("svm modelling...")
+    #for i in range(len(dataSVM.seq)): 
+        #a = np.concatenate(dataSVM.seq[i]).astype(None)
+    #print(a)
 
-from sklearn.model_selection import cross_validate
-from sklearn.metrics import recall_score
-from sklearn import svm
-scoring = ['precision_macro', 'recall_macro']
-clf = svm.SVC(kernel='linear', C=1, random_state=0)
-scores = cross_validate(clf, data.seq, data.seqTopo, scoring=scoring,cv=5, 
-                        return_train_score=False)
-sorted(scores.keys())
-scores['test_recall_macro']
-'''
+    from sklearn.model_selection import cross_validate
+    from sklearn.metrics import recall_score
+    from sklearn import svm
+    scoring = ['precision_macro', 'recall_macro']
+    clf = svm.SVC(kernel='linear', C=1, random_state=0)
+    scores = cross_validate(clf, dataSeq, dataStruc, scoring=scoring,cv=5, 
+                            return_train_score=False)
+    sorted(scores.keys())
+    scores['test_recall_macro']
