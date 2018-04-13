@@ -148,7 +148,9 @@ def test_fasta(filename,windowsize):
     for i in range(len(rawtoframe("data/test1.txt").seq)):
         testSeqSingle=''.join(rawtoframe("data/test1.txt").seq[i])
         testSeq.append(testSeqSingle) 
-     
+    
+    realStruc= topo_converter(rawtoframe("data/test1.txt").seqTopo)
+    
     testBinary = binary_rawdata(filename)
     testWind = data_window(windowsize,testBinary)
     testData = []
@@ -156,7 +158,7 @@ def test_fasta(filename,windowsize):
         seqData = testWind.iloc[i]
         testData.append(seqData)
         
-    return testSeq,testData
+    return testSeq,testData,realStruc
 
 
 ### Save prediction result ###
@@ -221,12 +223,82 @@ def randomforest(trainSeq,trainTopo,testseq):
 '''
 
 ### evaluation ###
+def performance(pred,real):
+    import math
+    f = open("result/evaluation.dat",'w')
+       
+    # Q3
+    correct = 0
+    total = 0
+    for i in range(len(pred)):
+        for j in range((len(pred[i]))):
+            total+=1
+            if pred[i][j]==real[i][j]:
+                correct+=1
+    q3 = correct/total
+    f.write("Q3:"+str(format(q3, '.0%')))
+    f.write('\n')
+    
+    # Q(x)  
+    # 0-H;1-E;2-C
+    for x in [0,1,2]:
+        correctx = 0
+        totalx = 0
+        for i in range(len(pred)):
+            for j in range((len(pred[i]))):
+                if real[i][j]==x:
+                    totalx+=1
+                    if pred[i][j]==real[i][j]:
+                        correctx+=1
+        qx = correctx/totalx
+        
+        convert = {0:'H',1:'E',2:'C'}
+        if x in convert:
+            rep = convert[x] 
+        
+        f.write("Q("+rep+'):'+str(format(qx, '.0%')))  
+        f.write('\n')
+        
+    # Corrlation coefficient(C(H),C(E),C(C))
+    structures = [0,1,2]
+    for x in structures:
+        realx = 0
+        predx = 0
+        prednotx = 0
+        Nopredx=0
+        NopredNotx=0
+        totalx = 0
+        for i in range(len(pred)):
+            for j in range((len(pred[i]))):
+                if real[i][j]==x:
+                    realx+=1
+                    if pred[i][j]==x:
+                        predx +=1
+                    else:
+                        prednotx+=1       
+                if real[i][j]!=x:
+                    if pred[i][j]==x:
+                        Nopredx+=1
+                    if pred[i][j]!=x:
+                        NopredNotx+=1
+        Px = predx
+        Rx = NopredNotx
+        Ux = prednotx
+        Ox = Nopredx
+        
+        Cx = format((Px*Rx-Ux*Ox)/(math.sqrt((Px+Ux)*(Px+Ox)*(Rx+Ux)*(Rx+Ox))), '.0%')
+        
+        convert = {0:'H',1:'E',2:'C'}
+        if x in convert:
+            rep = convert[x] 
+        f.write("C("+rep+'):'+str(Cx)) 
+        f.write('\n')
+
+    f.close()
 ### pssm ###
 ### output formating###
 
 ### novel sequence parser ###  
-
-
 if __name__ == "__main__":
     print("Parsing data...")
     dataBinary = binary_rawdata("data/test2.dat")
@@ -244,7 +316,7 @@ if __name__ == "__main__":
     clf.fit(dataSeq,dataStruc)
     
     print("Preparing test data...")
-    testSeq,testData = test_fasta("data/test1.txt",3)
+    testSeq,testData,realStruc = test_fasta("data/test1.txt",3)  
     
     print("Predicting...")
     preds = []
@@ -261,11 +333,11 @@ if __name__ == "__main__":
                             return_train_score=False)
     sorted(scores.keys())
     scores['test_recall_macro']
-
     DataFrame.from_dict(data=scores, orient='index').to_csv("result/cross_validation_score.csv")
-    #for key, value in sorted(scores.items()):
-     #   score.write(str(key)+'\t'+str(value)+'\n')
-    #score.close()
+    
+    print("Evaluating performance...")
+    performance(preds,realStruc)
+    
   
     print("Done!")
 
