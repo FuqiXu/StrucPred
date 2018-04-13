@@ -1,22 +1,14 @@
-
->>> 
->>> iris = load_iris()
->>> clf = tree.DecisionTreeClassifier()
->>> clf = clf.fit(iris.data, iris.target)
-
 # -*- coding: utf-8 -*-
 """
 Created on Wed Apr 11 20:32:51 2018
 
 @author: Fuqi Xu
 """
-
 import os
 import numpy as np
-from sklearn import svm
+import pandas
 from sklearn.externals import joblib
 from pandas.core.frame import DataFrame
-from sklearn.model_selection import cross_validate
 from sklearn import tree
 
 path = os.getcwd()
@@ -156,32 +148,23 @@ if __name__ == "__main__":
     dataBinary = binary_rawdata("data/trainset.dat")
     
     print("Adding window...")
-    dataWind = data_window(3,dataBinary)
+    dataWind = data_window(13,dataBinary)
     
     print("SVM prediction preparing...")
     dataSVM = data_svm(dataWind)
     dataSeq = pandas.Series.tolist(dataSVM.seq)
     dataStruc = pandas.Series.tolist(dataSVM.seqTopo)
     
-	print("Model building...")
-	clf = tree.DecisionTreeClassifier()
+    print("Model building...")
+    clf = tree.DecisionTreeClassifier(max_depth=5,min_samples_leaf=10)
     clf.fit(dataSeq, dataStruc)
 	
-	print("Saving models...")
+    print("Saving models...")
     filepath = os.path.join('models', 'sdt.pkl')
     if not os.path.exists('models'):
         os.makedirs('models')
     joblib.dump(clf, filepath)
-    '''
-	RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
-            max_depth=2, max_features='auto', max_leaf_nodes=None,
-            min_impurity_decrease=0.0, min_impurity_split=None,
-            min_samples_leaf=1, min_samples_split=2,
-            min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
-            oob_score=False, random_state=0, verbose=0, warm_start=False)
-
-    print(clf.feature_importances_)
-    print(clf.predict([[0, 0, 0, 0]]))
-    '''	
+ 
     print("Model Built!")
+    
     pass

@@ -6,10 +6,11 @@ Created on Wed Apr 11 20:32:51 2018
 """
 import os
 import numpy as np
+import pandas
 from pandas.core.frame import DataFrame
-from sklearn import svm
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_validate
+from sklearn.model_selection import cross_val_score
 
 path = os.getcwd()
 
@@ -164,12 +165,13 @@ def test_fasta(filename,windowsize):
 
 ### Save prediction result ###
 
-def sav_pred(prediction,testdata,testSeq,testfilename):
+def sav_pred(prediction,testdata,testSeq,model):
     # Create a prediction result folder a .dat file"
+    os.chdir(path)
+    
     filepath = os.path.join('result', 'pred.dat')
-    if not os.path.exists('result'):
-        os.makedirs('result')
     f = open(filepath, "a")
+    f.write(str(model))
     
     # Change numberic prediction to letters
     for i in range(len(prediction)):
@@ -196,10 +198,12 @@ def sav_pred(prediction,testdata,testSeq,testfilename):
 
 ### evaluation ###
 
-def performance(pred,real):
+def performance(pred,real,model):
     import math
-    f = open("result/evaluation.dat",'a')
-       
+    filepath = os.path.join('result','evaluation.dat')
+    f = open(filepath, "a")
+    f.write(str(model))
+    
     # Q3
     correct = 0
     total = 0
@@ -272,11 +276,24 @@ def performance(pred,real):
 
 ### Prediction ####
 if __name__ == "__main__":   
-    print("Preparing test data...")
-    testSeq,testData,realStruc = test_fasta("data/testset.dat",3)  
+    print("Parsing data...")
+    dataBinary = binary_rawdata("data/trainset.dat")
     
-	print("Importing model...")
-	clf = joblib.load('modles/clf.pkl')
+    print("Adding window...")
+    dataWind = data_window(13,dataBinary)
+    
+    print("SVM prediction preparing...")
+    dataSVM = data_svm(dataWind)
+    dataSeq = pandas.Series.tolist(dataSVM.seq)
+    dataStruc = pandas.Series.tolist(dataSVM.seqTopo)
+    
+    print("Preparing test data...")
+    testSeq,testData,realStruc = test_fasta("data/testset.dat",13)  
+    
+    print("Importing model...")
+    model = 'models/rf.pkl'
+    clf = joblib.load(model)
+    
     print("Predicting...")
     preds = []
     for i in range(len(testData)):
@@ -284,7 +301,7 @@ if __name__ == "__main__":
         preds.append(pred)  
     
     print("Saving prediction...")
-    sav_pred(preds,testData,testSeq,testfile)
+    sav_pred(preds,testData,testSeq)
     
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
@@ -292,38 +309,19 @@ if __name__ == "__main__":
                             return_train_score=False)
     sorted(scores.keys())
     scores['test_recall_macro']
-    DataFrame.from_dict(data=scores, orient='index').to_csv("result/cross_validation_score.csv")
+    df = DataFrame.from_dict(data=scores, orient='index')
+    df.to_csv("result/cross_validation_score.csv")
     
     print("Evaluating performance...")
     performance(preds,realStruc)
-      
-    print("Saving models...")
-    filepath = os.path.join('models', 'clf_win.pkl')
-    if not os.path.exists('models'):
-        os.makedirs('models')
-    joblib.dump(clf, filepath)
     
-    print("Done!")
-    pass
+    print("Scoring")
+    scores = cross_val_score(clf, dataSeq, dataStruc,
+                             cv=5, verbose=40, n_jobs=-1)
+    f = open("result/prediction_score.dat",'a')
+    f.write(str(model))
+    f.write(np.array_str(scores))
+    f.write("Accuracy: %0.6f (+/- %0.6f)" % (scores.mean(), scores.std() * 2))
+    f.close()
     
-	print("Predicting...")
-    preds = []
-    for i in range(len(testData)):
-        pred = clf.predict(testData[i].seq)
-        preds.append(pred)  
-    
-    print("Saving prediction...")
-    sav_pred(preds,testData,testSeq,"data/testset.dat")
-    
-    print("Cross validating...")
-    scoring = ['precision_macro', 'recall_macro']
-    scores = cross_validate(clf, dataSeq, dataStruc, scoring=scoring,cv=5, 
-                            return_train_score=False)
-    sorted(scores.keys())
-    scores['test_recall_macro']
-    DataFrame.from_dict(data=scores, orient='index').to_csv("result/cross_validation_score.csv")
-    
-    print("Evaluating performance...")
-    performance(preds,realStruc)
-      
     print("Done!")

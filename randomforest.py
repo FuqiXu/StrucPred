@@ -7,11 +7,9 @@ Created on Wed Apr 11 20:32:51 2018
 
 import os
 import numpy as np
-from sklearn import svm
+import pandas 
 from sklearn.externals import joblib
 from pandas.core.frame import DataFrame
-from sklearn.datasets import make_classification
-from sklearn.model_selection import cross_validate
 from sklearn.ensemble import RandomForestClassifier
 
 path = os.getcwd()
@@ -151,15 +149,15 @@ if __name__ == "__main__":
     dataBinary = binary_rawdata("data/trainset.dat")
     
     print("Adding window...")
-    dataWind = data_window(3,dataBinary)
+    dataWind = data_window(13,dataBinary)
     
     print("SVM prediction preparing...")
     dataSVM = data_svm(dataWind)
     dataSeq = pandas.Series.tolist(dataSVM.seq)
     dataStruc = pandas.Series.tolist(dataSVM.seqTopo)
     
-	print("Model building...")
-    clf = RandomForestClassifier(max_depth=2, random_state=0)
+    print("Model building...")
+    clf = RandomForestClassifier(n_estimators=70, random_state=20)
     clf.fit(dataSeq, dataStruc)
     '''
 	RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
@@ -172,11 +170,12 @@ if __name__ == "__main__":
     print(clf.feature_importances_)
     print(clf.predict([[0, 0, 0, 0]]))
     '''	
-	print("Saving models...")
+    print("Saving models...")
     filepath = os.path.join('models', 'rf.pkl')
     if not os.path.exists('models'):
         os.makedirs('models')
     joblib.dump(clf, filepath)
 	
     print("Model Built!")
+    
     pass
