@@ -10,6 +10,7 @@ import os
 import pandas
 from sklearn.model_selection import cross_validate
 from sklearn import svm
+from sklearn.externals import joblib
 
 path = os.getcwd()
 
@@ -145,11 +146,11 @@ def data_svm(data):
 def test_fasta(filename,windowsize):
     # Storing original format of sequences.
     testSeq = []
-    for i in range(len(rawtoframe("data/test1.txt").seq)):
-        testSeqSingle=''.join(rawtoframe("data/test1.txt").seq[i])
+    for i in range(len(rawtoframe(filename).seq)):
+        testSeqSingle=''.join(rawtoframe(filename).seq[i])
         testSeq.append(testSeqSingle) 
     
-    realStruc= topo_converter(rawtoframe("data/test1.txt").seqTopo)
+    realStruc= topo_converter(rawtoframe(filename).seqTopo)
     
     testBinary = binary_rawdata(filename)
     testWind = data_window(windowsize,testBinary)
@@ -170,9 +171,15 @@ def sav_pred(prediction,testdata,testSeq,testfilename):
     f = open(filepath, "a")
     
     # Change numberic prediction to letters
-    predStruc = []
-    preds = []
     for i in range(len(prediction)):
+        # Save prediction result to file
+        f.write(testdata[i].seqID)
+        f.write("\n")
+        f.write(testSeq[i])
+        f.write("\n")
+        
+        predStruc = []
+        pred = []
         for j in range(len(prediction[i])):
             if prediction[i][j]==0:
                 predStruc.append ('H')
@@ -181,15 +188,7 @@ def sav_pred(prediction,testdata,testSeq,testfilename):
             if prediction[i][j]==2:
                 predStruc.append ('C')
         pred = str.join("",predStruc)
-        preds.append(pred)
-        
-    # Save prediction result to file
-    for m in range(len(testSeq)):
-        f.write(testdata[m].seqID)
-        f.write("\n")
-        f.write(testSeq[m])
-        f.write("\n")
-        f.write(preds[m])
+        f.write(pred)
         f.write("\n")
     f.close()
 
@@ -211,8 +210,7 @@ def performance(pred,real):
     f.write("Q3:"+str(format(q3, '.0%')))
     f.write('\n')
     
-    # Q(x)  
-    # 0-H;1-E;2-C
+    # Q(x); 0-H;1-E;2-C
     for x in [0,1,2]:
         correctx = 0
         totalx = 0
@@ -269,13 +267,12 @@ def performance(pred,real):
 
     f.close()
 ### pssm ###
-### output formating###
 
 ### novel sequence parser ###  
-if __name__ == "__main__":
-#def use(windowsize,trainfile,testfile):
+
+def use(windowsize,trainfile,testfile):
     print("Parsing data...")
-    dataBinary = binary_rawdata("data/trainset.dat")
+    dataBinary = binary_rawdata(trainfile)
     
     print("Adding window...")
     dataWind = data_window(3,dataBinary)
@@ -290,20 +287,16 @@ if __name__ == "__main__":
     clf.fit(dataSeq,dataStruc)
     
     print("Preparing test data...")
-    testSeq,testData,realStruc = test_fasta("data/testset.dat",3)  
+    testSeq,testData,realStruc = test_fasta(testfile,3)  
     
     print("Predicting...")
     preds = []
     for i in range(len(testData)):
-        print(testData[i].seq)
-        print('\n')
         pred = clf.predict(testData[i].seq)
-        print(pred)
-        print('\n')
-        preds.append(pred)
+        preds.append(pred)  
     
     print("Saving prediction...")
-    sav_pred(preds,testData,testSeq,"data/testset.dat")
+    sav_pred(preds,testData,testSeq,testfile)
     
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
@@ -316,13 +309,18 @@ if __name__ == "__main__":
     print("Evaluating performance...")
     performance(preds,realStruc)
       
+    print("Saving models...")
+    filepath = os.path.join('models', 'clf_win.pkl')
+    if not os.path.exists('models'):
+        os.makedirs('models')
+    joblib.dump(clf, filepath)
+    
     print("Done!")
     pass
-'''    
-for i in range(3,28,2):
-    f = open("result/evaluation.dat",'a')
-    f.write("windowsize:"+str(i)+'\n')
-    f.close
-    use(i,"data/test2.dat","data/additional50Sequences_3lines.txt")   
-#"data/additional50Sequences_3lines.txt"
-'''
+
+if __name__ == "__main__":   
+    for i in range(3,4,2):
+        use(i,"data/trainset.dat","data/testset.dat")  
+        f = open("result/evaluation.dat",'a')
+        f.write("windowsize:"+str(i)+'\n')
+        f.close()
