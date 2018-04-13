@@ -172,5 +172,11 @@ if __name__ == "__main__":
     print(clf.feature_importances_)
     print(clf.predict([[0, 0, 0, 0]]))
     '''	
+	print("Saving models...")
+    filepath = os.path.join('models', 'rf.pkl')
+    if not os.path.exists('models'):
+        os.makedirs('models')
+    joblib.dump(clf, filepath)
+	
     print("Model Built!")
     pass
