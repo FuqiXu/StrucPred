@@ -184,7 +184,7 @@ def sav_pred(prediction,testdata,testSeq,testfilename):
         preds.append(pred)
         
     # Save prediction result to file
-    for m in range(len(testdata)):
+    for m in range(len(testSeq)):
         f.write(testdata[m].seqID)
         f.write("\n")
         f.write(testSeq[m])
@@ -258,7 +258,8 @@ def performance(pred,real):
         Ux = prednotx
         Ox = Nopredx
         
-        Cx = format((Px*Rx-Ux*Ox)/(math.sqrt((Px+Ux)*(Px+Ox)*(Rx+Ux)*(Rx+Ox))), '.0%')
+        Cx = format((Px*Rx-Ux*Ox)/
+                    (math.sqrt((Px+Ux)*(Px+Ox)*(Rx+Ux)*(Rx+Ox))), '.0%')
         
         convert = {0:'H',1:'E',2:'C'}
         if x in convert:
@@ -271,13 +272,13 @@ def performance(pred,real):
 ### output formating###
 
 ### novel sequence parser ###  
-#if __name__ == "__main__":
-def use(windowsize,trainfile,testfile):
+if __name__ == "__main__":
+#def use(windowsize,trainfile,testfile):
     print("Parsing data...")
-    dataBinary = binary_rawdata(trainfile)
+    dataBinary = binary_rawdata("data/trainset.dat")
     
     print("Adding window...")
-    dataWind = data_window(windowsize,dataBinary)
+    dataWind = data_window(3,dataBinary)
     
     print("SVM prediction preparing...")
     dataSVM = data_svm(dataWind)
@@ -289,16 +290,20 @@ def use(windowsize,trainfile,testfile):
     clf.fit(dataSeq,dataStruc)
     
     print("Preparing test data...")
-    testSeq,testData,realStruc = test_fasta(testfile,windowsize)  
+    testSeq,testData,realStruc = test_fasta("data/testset.dat",3)  
     
     print("Predicting...")
     preds = []
     for i in range(len(testData)):
+        print(testData[i].seq)
+        print('\n')
         pred = clf.predict(testData[i].seq)
+        print(pred)
+        print('\n')
         preds.append(pred)
     
     print("Saving prediction...")
-    sav_pred(preds,testData,testSeq,testfile)
+    sav_pred(preds,testData,testSeq,"data/testset.dat")
     
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
@@ -313,9 +318,11 @@ def use(windowsize,trainfile,testfile):
       
     print("Done!")
     pass
-    
+'''    
 for i in range(3,28,2):
     f = open("result/evaluation.dat",'a')
     f.write("windowsize:"+str(i)+'\n')
     f.close
-    use(i,"data/cas2.3line.txt","data/additional50Sequences_3lines.txt")   
+    use(i,"data/test2.dat","data/additional50Sequences_3lines.txt")   
+#"data/additional50Sequences_3lines.txt"
+'''
