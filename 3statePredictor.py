@@ -167,7 +167,7 @@ def sav_pred(prediction,testdata,testSeq,testfilename):
     filepath = os.path.join('result', 'pred.dat')
     if not os.path.exists('result'):
         os.makedirs('result')
-    f = open(filepath, "w")
+    f = open(filepath, "a")
     
     # Change numberic prediction to letters
     predStruc = []
@@ -193,39 +193,11 @@ def sav_pred(prediction,testdata,testSeq,testfilename):
         f.write("\n")
     f.close()
 
-'''
-
-### svm model ###
-
-    clf = svm.SVC()
-    linSVC(trainSeq,trainTopo,testSeq)
-
-
-    #scores = cross_val_score(clf, trainSeq, trainTopo, cv=5, verbose=40, n_jobs=-1)
-    #print('scores')
-'''
-'''
-#using random forest classifier)
-def randomforest(trainSeq,trainTopo,testseq):
-    X, y = make_classification(trainSeq, trainTopo)
-    rf_clf = RandomForestClassifier(max_depth=2, random_state=0)
-    rf_clf.fit(X, y)
-    print("prediction_random Forest:")
-    print(rf_clf.predict(testseq))
-    prediction = open('prediction.txt','a')
-    PredTopo = Topo_Converter_Rev(rf_clf.predict(testseq))
-    prediction.write(PredTopo)
-    prediction.close()
-    scores = cross_val_score(rf_clf, trainSeq, trainTopo, cv=5, verbose=40, n_jobs=-1) 
-    print('scores')
-    print(scores)
-    return rf_clf    
-'''
 
 ### evaluation ###
 def performance(pred,real):
     import math
-    f = open("result/evaluation.dat",'w')
+    f = open("result/evaluation.dat",'a')
        
     # Q3
     correct = 0
@@ -299,12 +271,13 @@ def performance(pred,real):
 ### output formating###
 
 ### novel sequence parser ###  
-if __name__ == "__main__":
+#if __name__ == "__main__":
+def use(windowsize,trainfile,testfile):
     print("Parsing data...")
-    dataBinary = binary_rawdata("data/test2.dat")
+    dataBinary = binary_rawdata(trainfile)
     
     print("Adding window...")
-    dataWind = data_window(3,dataBinary)
+    dataWind = data_window(windowsize,dataBinary)
     
     print("SVM prediction preparing...")
     dataSVM = data_svm(dataWind)
@@ -316,7 +289,7 @@ if __name__ == "__main__":
     clf.fit(dataSeq,dataStruc)
     
     print("Preparing test data...")
-    testSeq,testData,realStruc = test_fasta("data/test1.txt",3)  
+    testSeq,testData,realStruc = test_fasta(testfile,windowsize)  
     
     print("Predicting...")
     preds = []
@@ -325,7 +298,7 @@ if __name__ == "__main__":
         preds.append(pred)
     
     print("Saving prediction...")
-    predResult = sav_pred(preds,testData,testSeq,'test1')
+    sav_pred(preds,testData,testSeq,testfile)
     
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
@@ -337,8 +310,12 @@ if __name__ == "__main__":
     
     print("Evaluating performance...")
     performance(preds,realStruc)
-    
-  
+      
     print("Done!")
-
-   
+    pass
+    
+for i in range(3,28,2):
+    f = open("result/evaluation.dat",'a')
+    f.write("windowsize:"+str(i)+'\n')
+    f.close
+    use(i,"data/cas2.3line.txt","data/additional50Sequences_3lines.txt")   
