@@ -5,9 +5,9 @@ Created on Wed Apr 11 20:32:51 2018
 @author: Fuqi Xu
 """
 from pandas.core.frame import DataFrame
-import numpy as np
 import os
 import pandas
+import numpy as np
 from sklearn.model_selection import cross_validate
 from sklearn import svm
 from sklearn.externals import joblib
@@ -266,10 +266,9 @@ def performance(pred,real):
         f.write('\n')
 
     f.close()
-### pssm ###
 
-### novel sequence parser ###  
 
+### Prediction ####
 def use(windowsize,trainfile,testfile):
     print("Parsing data...")
     dataBinary = binary_rawdata(trainfile)
@@ -319,7 +318,7 @@ def use(windowsize,trainfile,testfile):
     pass
 
 if __name__ == "__main__":   
-    for i in range(3,4,2):
+    for i in range(5,28,2):
         use(i,"data/trainset.dat","data/testset.dat")  
         f = open("result/evaluation.dat",'a')
         f.write("windowsize:"+str(i)+'\n')
