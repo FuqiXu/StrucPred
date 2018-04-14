@@ -7,7 +7,7 @@ Created on Wed Apr 11 20:32:51 2018
 import os
 import numpy as np
 import pandas
-from sklearn.externals import joblib
+import pickle
 from pandas.core.frame import DataFrame
 from sklearn import tree
 
@@ -142,13 +142,12 @@ def data_svm(data):
 ### Prediction ####
 
 if __name__ == "__main__":
-    print("Remember to change windowsize")
 	
     print("Parsing data...")
     dataBinary = binary_rawdata("data/trainset.dat")
     
     print("Adding window...")
-    dataWind = data_window(13,dataBinary)
+    dataWind = data_window(15,dataBinary)
     
     print("SVM prediction preparing...")
     dataSVM = data_svm(dataWind)
@@ -163,7 +162,8 @@ if __name__ == "__main__":
     filepath = os.path.join('models', 'sdt.pkl')
     if not os.path.exists('models'):
         os.makedirs('models')
-    joblib.dump(clf, filepath)
+    with open(filepath,'wb') as f:
+        pickle.dump(clf, f)
  
     print("Model Built!")
     

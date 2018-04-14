@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas 
 from sklearn import svm
-from sklearn.externals import joblib
+import pickle
 from pandas.core.frame import DataFrame
 from sklearn.ensemble import RandomForestClassifier
 
@@ -137,13 +137,12 @@ def data_svm(data):
 ### Prediction ####
 
 if __name__ == "__main__":
-    print("Remember to change windowsize")
 	
     print("Parsing data...")
     dataBinary = binary_rawdata("data/trainset.dat")
     
     print("Adding window...")
-    dataWind = data_window(13,dataBinary)
+    dataWind = data_window(17,dataBinary)
     
     print("SVM prediction preparing...")
     dataSVM = data_svm(dataWind)
@@ -155,10 +154,11 @@ if __name__ == "__main__":
     clf.fit(dataSeq,dataStruc)
 	
     print("Saving models...")
-    filepath = os.path.join('models', 'linsvm.pkl')
+    filepath = os.path.join('models', 'linsvm17.pkl')
     if not os.path.exists('models'):
         os.makedirs('models')
-    joblib.dump(clf, filepath)
+    with open(filepath,'wb') as f:
+        pickle.dump(clf, f)
 	
     print("Model Built!")
     

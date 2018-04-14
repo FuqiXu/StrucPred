@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import pandas
+import pickle
 from pandas.core.frame import DataFrame
-from sklearn.externals import joblib
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import cross_val_score
 
@@ -163,6 +163,9 @@ def sav_pred(prediction,testdata,testSeq,model):
     # Create a prediction result folder a .dat file"
     os.chdir(path)
     
+    if not os.path.exists('result'):
+        os.makedirs('result')
+        
     filepath = os.path.join('result', 'pred.dat')
     f = open(filepath, "a")
     f.write(str(model))
@@ -270,9 +273,9 @@ def performance(pred,real,model):
 
 ### Prediction ####
 if __name__ == "__main__": 
-    windowsize = 13
+    windowsize = 15
     print("Parsing data...")
-    dataBinary = binary_rawdata("data/trainset1.dat")
+    dataBinary = binary_rawdata("data/trainset.dat")
     
     print("Adding window...")
     dataWind = data_window(windowsize,dataBinary)
@@ -283,11 +286,12 @@ if __name__ == "__main__":
     dataStruc = pandas.Series.tolist(dataSVM.seqTopo)
     
     print("Preparing test data...")
-    testSeq,testData,realStruc = test_fasta("data/testset1.dat",windowsize)  
+    testSeq,testData,realStruc = test_fasta("data/testset.dat",windowsize)  
     
     print("Importing model...")
-    model = 'models/linsvm.pkl'
-    clf = joblib.load(model)
+    model = 'models/linsvm15.pkl'
+    f = open(model,'rb')
+    clf = pickle.load(f)
     
     print("Predicting...")
     preds = []
@@ -297,6 +301,7 @@ if __name__ == "__main__":
     
     print("Saving prediction...")
     sav_pred(preds,testData,testSeq,model)
+    
     
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
