@@ -3,8 +3,10 @@ import numpy as np
 import pandas
 import pickle
 from pandas.core.frame import DataFrame
-from sklearn.model_selection import cross_validate
-from sklearn.model_selection import cross_val_score
+from sklearn.externals import joblib
+
+#from sklearn.model_selection import cross_validate
+#from sklearn.model_selection import cross_val_score
 
 path = os.getcwd()
 
@@ -163,12 +165,10 @@ def sav_pred(prediction,testdata,testSeq,model):
     # Create a prediction result folder a .dat file"
     os.chdir(path)
     
-    if not os.path.exists('result'):
-        os.makedirs('result')
-        
     filepath = os.path.join('result', 'pred.dat')
     f = open(filepath, "a")
     f.write(str(model))
+    f.write('\n')
     
     # Change numberic prediction to letters
     for i in range(len(prediction)):
@@ -200,7 +200,8 @@ def performance(pred,real,model):
     filepath = os.path.join('result','evaluation.dat')
     f = open(filepath, "a")
     f.write(str(model))
-    
+    f.write('\n')
+
     # Q3
     correct = 0
     total = 0
@@ -210,7 +211,7 @@ def performance(pred,real,model):
             if pred[i][j]==real[i][j]:
                 correct+=1
     q3 = correct/total
-    f.write("Q3:"+str(format(q3, '.0%')))
+    f.write("Q3:"+str(format(q3, '.00%')))
     f.write('\n')
     
     # Q(x); 0-H;1-E;2-C
@@ -229,7 +230,7 @@ def performance(pred,real,model):
         if x in convert:
             rep = convert[x] 
         
-        f.write("Q("+rep+'):'+str(format(qx, '.0%')))  
+        f.write("Q("+rep+'):'+str(format(qx, '.00%')))  
         f.write('\n')
         
     # Corrlation coefficient(C(H),C(E),C(C))
@@ -260,7 +261,7 @@ def performance(pred,real,model):
         Ox = Nopredx
         
         Cx = format((Px*Rx-Ux*Ox)/
-                    (math.sqrt((Px+Ux)*(Px+Ox)*(Rx+Ux)*(Rx+Ox))), '.0%')
+                    (math.sqrt((Px+Ux)*(Px+Ox)*(Rx+Ux)*(Rx+Ox))), '.00%')
         
         convert = {0:'H',1:'E',2:'C'}
         if x in convert:
@@ -275,7 +276,7 @@ def performance(pred,real,model):
 if __name__ == "__main__": 
     windowsize = 15
     print("Parsing data...")
-    dataBinary = binary_rawdata("data/trainset.dat")
+    dataBinary = binary_rawdata("data/trainset1.dat")
     
     print("Adding window...")
     dataWind = data_window(windowsize,dataBinary)
@@ -286,7 +287,7 @@ if __name__ == "__main__":
     dataStruc = pandas.Series.tolist(dataSVM.seqTopo)
     
     print("Preparing test data...")
-    testSeq,testData,realStruc = test_fasta("data/testset.dat",windowsize)  
+    testSeq,testData,realStruc = test_fasta("data/testset1.dat",windowsize)  
     
     print("Importing model...")
     model = 'models/linsvm15.pkl'
@@ -302,7 +303,7 @@ if __name__ == "__main__":
     print("Saving prediction...")
     sav_pred(preds,testData,testSeq,model)
     
-    
+    '''
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
     scores = cross_validate(clf, dataSeq, dataStruc, scoring=scoring,cv=5, 
@@ -311,10 +312,10 @@ if __name__ == "__main__":
     scores['test_recall_macro']
     df = DataFrame.from_dict(data=scores, orient='index')
     df.to_csv("result/cross_validation_score.csv")
-    
+    '''
     print("Evaluating performance...")
     performance(preds,realStruc,model)
-    
+    '''
     print("Scoring")
     scores = cross_val_score(clf, dataSeq, dataStruc,
                              cv=5, verbose=40, n_jobs=-1)
@@ -323,5 +324,5 @@ if __name__ == "__main__":
     f.write(np.array_str(scores))
     f.write("Accuracy: %0.6f (+/- %0.6f)" % (scores.mean(), scores.std() * 2))
     f.close()
-    
+    '''
     print("Done!")
