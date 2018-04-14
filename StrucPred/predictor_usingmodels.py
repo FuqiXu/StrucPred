@@ -275,8 +275,8 @@ def performance(pred,real,model):
 
 
 ### Prediction ####
-if __name__ == "__main__": 
-    windowsize = 13
+if __name__ == "__main__":
+    windowsize = 5   
     print("Parsing data...")
     dataBinary = binary_rawdata("data/trainset.dat")
     
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     testSeq,testData,realStruc = test_fasta("data/testset.dat",windowsize)  
     
     print("Importing model...")
-    model = 'models/linsvm.pkl'
+    model = 'models/linsvm5.pkl'
     clf = joblib.load(model)
     
     print("Predicting...")
@@ -302,7 +302,7 @@ if __name__ == "__main__":
         preds.append(pred)  
     
     print("Saving prediction...")
-    sav_pred(preds,testData,testSeq,model)
+    sav_pred(preds,testData,testSeq)
     
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
@@ -314,7 +314,7 @@ if __name__ == "__main__":
     df.to_csv("result/cross_validation_score.csv")
     
     print("Evaluating performance...")
-    performance(preds,realStruc,model)
+    performance(preds,realStruc)
     
     print("Scoring")
     scores = cross_val_score(clf, dataSeq, dataStruc,

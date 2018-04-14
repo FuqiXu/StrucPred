@@ -5,3 +5,17 @@ Q(C):82%
 C(H):60%
 C(E):47%
 C(C):53%
+models/rf.pklQ3:73%
+Q(H):76%
+Q(E):38%
+Q(C):82%
+C(H):60%
+C(E):47%
+C(C):53%
+models/linsvm.pklQ3:61%
+Q(H):61%
+Q(E):37%
+Q(C):69%
+C(H):38%
+C(E):33%
+C(C):34%
