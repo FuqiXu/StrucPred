@@ -87,7 +87,7 @@ if __name__ == "__main__":
     dataStruc = pd.Series.tolist(dataSVM.seqTopo)
 
     print("Model building...")
-    clf = svm.SVC(kernel='linear', C=1, random_state=0)
+    clf = svm.LinearSVC(max_iter = 500, dual = False)
     clf.fit(dataSeq,dataStruc)
 	
     print("Saving models...")
