@@ -3,7 +3,6 @@ import numpy as np
 import pandas
 import pickle
 from pandas.core.frame import DataFrame
-from sklearn.externals import joblib
 
 #from sklearn.model_selection import cross_validate
 #from sklearn.model_selection import cross_val_score
@@ -165,7 +164,7 @@ def sav_pred(prediction,testdata,testSeq,model):
     # Create a prediction result folder a .dat file"
     os.chdir(path)
     
-    filepath = os.path.join('result', 'pred.dat')
+    filepath = os.path.join('result','pred.dat')
     f = open(filepath, "a")
     f.write(str(model))
     f.write('\n')
@@ -276,7 +275,7 @@ def performance(pred,real,model):
 if __name__ == "__main__": 
     windowsize = 15
     print("Parsing data...")
-    dataBinary = binary_rawdata("data/trainset1.dat")
+    dataBinary = binary_rawdata("data/trainset.dat")
     
     print("Adding window...")
     dataWind = data_window(windowsize,dataBinary)
@@ -287,10 +286,10 @@ if __name__ == "__main__":
     dataStruc = pandas.Series.tolist(dataSVM.seqTopo)
     
     print("Preparing test data...")
-    testSeq,testData,realStruc = test_fasta("data/testset1.dat",windowsize)  
+    testSeq,testData,realStruc = test_fasta("data/testset.dat",windowsize)  
     
     print("Importing model...")
-    model = 'models/linsvm15.pkl'
+    model = 'models/rbfsvm15.pkl'
     f = open(model,'rb')
     clf = pickle.load(f)
     
