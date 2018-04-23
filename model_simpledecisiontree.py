@@ -72,7 +72,8 @@ def seq_converter(seq):
         for j in range(len(seq[i])):
             if seq[i][j] in aa_dic:
                 seq[i][j] = aa_dic.get(seq[i][j])
-                
+            else:
+                seq[i][j] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]    
     return (seq)
 
 def topo_converter(seqTopo):
@@ -103,8 +104,8 @@ def binary_rawdata(filename):
 def data_window(windowsize,data):
     # Adding head and tails in protein sequence data.
     for i in range(len(data)):
-        seqFirst=data.seq[i][0]      
-        seqLast=data.seq[i][-1]
+        seqFirst=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,]       
+        seqLast=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,] 
         halfwin = int((windowsize-1)/2)
         for j in range(halfwin):
             data.seq[i].append(seqLast)

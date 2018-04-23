@@ -5,9 +5,9 @@ from pandas.core.frame import DataFrame
 import pickle
 from sklearn import svm
 
-from predictor import binary_rawdata
-from predictor import data_window
-from predictor import data_svm
+from predictor_fasta import binary_rawdata
+from predictor_fasta import data_window
+from predictor_fasta import data_svm
 
 path = os.getcwd()
 

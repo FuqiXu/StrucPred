@@ -4,8 +4,8 @@ import pandas
 import pickle
 from pandas.core.frame import DataFrame
 
-#from sklearn.model_selection import cross_validate
-#from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_validate
+from sklearn.model_selection import cross_val_score
 
 path = os.getcwd()
 
@@ -259,6 +259,7 @@ def performance(pred,real,model):
         Ux = prednotx
         Ox = Nopredx
         
+        '''
         Cx = format((Px*Rx-Ux*Ox)/
                     (math.sqrt((Px+Ux)*(Px+Ox)*(Rx+Ux)*(Rx+Ox))), '.00%')
         
@@ -267,6 +268,7 @@ def performance(pred,real,model):
             rep = convert[x] 
         f.write("C("+rep+'):'+str(Cx)) 
         f.write('\n')
+        '''
 
     f.close()
 
@@ -302,7 +304,7 @@ if __name__ == "__main__":
     print("Saving prediction...")
     sav_pred(preds,testData,testSeq,model)
     
-    '''
+    
     print("Cross validating...")
     scoring = ['precision_macro', 'recall_macro']
     scores = cross_validate(clf, dataSeq, dataStruc, scoring=scoring,cv=5, 
@@ -311,10 +313,10 @@ if __name__ == "__main__":
     scores['test_recall_macro']
     df = DataFrame.from_dict(data=scores, orient='index')
     df.to_csv("result/cross_validation_score.csv")
-    '''
+    
     print("Evaluating performance...")
     performance(preds,realStruc,model)
-    '''
+    
     print("Scoring")
     scores = cross_val_score(clf, dataSeq, dataStruc,
                              cv=5, verbose=40, n_jobs=-1)
@@ -323,5 +325,5 @@ if __name__ == "__main__":
     f.write(np.array_str(scores))
     f.write("Accuracy: %0.6f (+/- %0.6f)" % (scores.mean(), scores.std() * 2))
     f.close()
-    '''
+    
     print("Done!")
